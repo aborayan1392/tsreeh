@@ -3,6 +3,8 @@ name: Build Native Kotlin APK
 on:
   push:
     branches: [ android-kotlin-native ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
