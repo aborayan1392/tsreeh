@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تصريح دخول الصف</title>
+<meta name="description" content="تطبيق مدرسي لإصدار تصاريح دخول الحصة للطلاب وإرسالها للمعلمين عبر واتساب نصًا أو صورة.">
+<meta name="theme-color" content="#0E5A4E">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="تصريح الصف">
+<link rel="stylesheet" href="./css/fonts.css">
+<link rel="stylesheet" href="./css/styles.css">
+<script src="./vendor/xlsx.full.min.js" defer></script>
+<script src="./vendor/html2canvas.min.js" defer></script>
+<script src="./js/app.js" defer></script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <div class="ico"><img src="./icons/icon.svg" alt="أيقونة التطبيق"></div>
+    <div class="sb-title" style="min-width:0">
+      <h1>تصريح دخول الصف</h1>
+      <small id="brandSchool">أدخل بيانات المدرسة</small>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">العمل اليومي</div>
+    <button class="nav-item active" data-tab="issue"><svg viewBox="0 0 24 24"><path d="M3 9V6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V9a3 3 0 0 0 0 6v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5V15a3 3 0 0 0 0-6z"/><path d="M14 5v14"/></svg><span class="nt">إصدار تصريح</span></button>
+    <button class="nav-item" data-tab="log"><svg viewBox="0 0 24 24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"/><path d="M3.6 6.5h.01M3.6 12h.01M3.6 17.5h.01"/></svg><span class="nt">سجل التصاريح</span><span class="nb" id="navLog">0</span></button>
+    <div class="sb-sec">القوائم</div>
+    <button class="nav-item" data-tab="students"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20v-1.4A4.6 4.6 0 0 1 7.1 14h3.8a4.6 4.6 0 0 1 4.6 4.6V20"/><path d="M17 8.2a3 3 0 0 1 0 5.6M18.5 14.4A4 4 0 0 1 21.5 18v2"/></svg><span class="nt">الطلاب</span><span class="nb" id="navStudents">0</span></button>
+    <button class="nav-item" data-tab="teachers"><svg viewBox="0 0 24 24"><path d="M12 4.2 21 8.4l-9 4.2-9-4.2z"/><path d="M6.5 11v4.4c0 1.9 2.7 3.1 5.5 3.1s5.5-1.2 5.5-3.1V11"/><path d="M21 8.4v5"/></svg><span class="nt">المعلمون</span><span class="nb" id="navTeachers">0</span></button>
+    <div class="sb-sec">الإعداد</div>
+    <button class="nav-item" data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.4v2.6M12 19v2.6M2.4 12H5M19 12h2.6M5.2 5.2 7 7M17 17l1.8 1.8M18.8 5.2 17 7M7 17l-1.8 1.8"/></svg><span class="nt">الإعدادات</span></button>
+  </nav>
+  <div class="sb-foot"><span class="sb-ver">نسخة ١٫٠</span><span class="db" id="dbBadge">حفظ دائم</span></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <button class="burger" id="burger" aria-label="فتح القائمة"><span></span><span></span><span></span></button>
+    <div class="tb-title">
+      <b>تصريح دخول الصف</b>
+      <small id="brandSchool2">أدخل بيانات المدرسة</small>
+    </div>
+    <div class="ico-sm"><img src="./icons/icon.svg" alt=""></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== إصدار تصريح ===== -->
+  <section class="page active" id="page-issue">
+    <div class="board">
+      <div class="cell"><b id="kpiStudents">٠</b><span>طالب مسجّل</span></div>
+      <div class="cell"><b id="kpiTeachers">٠</b><span>معلم</span></div>
+      <div class="cell red"><b id="kpiToday">٠</b><span>تصريح اليوم</span></div>
+    </div>
+
+    <div class="issue-grid"><div class="col-a">
+    <div class="card">
+      <div class="card-h">
+        <div class="step">١</div>
+        <div><h2>اختر الطلاب</h2><p>اضغط البطاقة للتحديد · الدائرة الحمراء = عدد تصاريح الطالب</p></div>
+        <span class="side" id="selSide">٠ محدَّد</span>
+      </div>
+      <div class="card-b tight">
+        <div class="toolbar">
+          <label class="search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5 17 17"/></svg>
+            <input type="text" id="qStudents" placeholder="ابحث عن طالب…">
+          </label>
+          <button class="icon-act" id="selAll" aria-label="تحديد الكل"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></button>
+          <button class="icon-act ghost" id="selNone" aria-label="مسح التحديد"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+        <div id="issueStudents"></div>
+      </div>
+    </div>
+    </div><div class="col-b">
+
+    <div class="card">
+      <div class="card-h">
+        <div class="step">٢</div>
+        <div><h2>بيانات الحصة والسبب</h2><p>تظهر في ترويسة بطاقة التصريح</p></div>
+      </div>
+      <div class="card-b">
+        <div class="fgrid">
+          <div class="field"><label>الصف</label><input type="text" id="fClass" placeholder="٢/٣ ثانوي"></div>
+          <div class="field"><label>الحصة</label>
+            <select id="fPeriod"><option value="">—</option><option>الأولى</option><option>الثانية</option><option>الثالثة</option>
+            <option>الرابعة</option><option>الخامسة</option><option>السادسة</option><option>السابعة</option><option>الثامنة</option></select>
+          </div>
+          <div class="field span2"><label>المادة</label><input type="text" id="fSubject" placeholder="الرياضيات"></div>
+          <div class="field"><label>التاريخ</label><input type="date" id="fDate"></div>
+          <div class="field"><label>الوقت</label><input type="time" id="fTime"></div>
+          <div class="field span2" style="margin-bottom:0"><label>صيغة التاريخ في البطاقة</label>
+            <input type="hidden" id="fCal" value="both">
+            <div class="seg" id="segCal">
+              <button class="on" data-v="both">هجري + ميلادي</button>
+              <button data-v="g">ميلادي</button>
+              <button data-v="h">هجري</button>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>سبب وجود الطلاب لديك</label>
+          <div class="chips-scroll" id="reasonChips"></div>
+          <input type="text" id="fReason" placeholder="اكتب السبب أو اختر من الأعلى">
+        </div>
+        <div class="field" style="margin-bottom:0"><label>أسلوب المخاطبة</label><select id="fTemplate"></select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <div class="step">٣</div>
+        <div><h2>المعلم المستلم</h2><p>اختر معلمًا أو أكثر — يُخاطَب كل واحد باسمه</p></div>
+      </div>
+      <div class="card-b tight"><div id="issueTeachers"></div></div>
+    </div>
+
+    <button class="btn green block lg" id="makePermit">إصدار التصريح</button>
+    </div></div>
+  </section>
+
+  <!-- ===== الطلاب ===== -->
+  <section class="page" id="page-students">
+    <div class="card collapsible collapsed" id="addStudentsCard">
+      <div class="card-h" data-toggle="addStudentsCard"><div class="step g">+</div><div><h2>إضافة طلاب</h2><p>اسم في كل سطر، أو استيراد من إكسل أو ملف نصي</p></div><span class="chev">▾</span></div>
+      <div class="card-b">
+        <div class="field"><textarea id="stBulk" rows="3" placeholder="اسم الطالب في كل سطر…"></textarea></div>
+        <button class="btn green block" id="stAdd" style="margin-bottom:8px">إضافة للقائمة</button>
+        <div class="row even">
+          <button class="btn" id="stImportX">استيراد إكسل</button>
+          <button class="btn" id="stImportT">استيراد ملف نصي</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="step g">≡</div><div><h2>قائمة الطلاب</h2><p>الرقم الأحمر يمين الاسم هو عدد تصاريحه</p></div><span class="side" id="stCount"></span></div>
+      <div class="card-b">
+        <input type="text" id="qStudents2" placeholder="ابحث…" style="margin-bottom:12px">
+        <div id="studentsList"></div>
+        <div class="divider"></div>
+        <div class="row even3">
+          <button class="btn sm" id="stExport">تصدير إكسل</button>
+          <button class="btn sm ghost" id="stResetCounts">تصفير العدادات</button>
+          <button class="btn sm danger" id="stClear">حذف الكل</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== المعلمون ===== -->
+  <section class="page" id="page-teachers">
+    <div class="card collapsible collapsed" id="addTeacherCard">
+      <div class="card-h" data-toggle="addTeacherCard"><div class="step g">+</div><div><h2>إضافة معلم</h2><p>الرقم اختياري — بوجوده يفتح واتساب على محادثته مباشرة</p></div><span class="chev">▾</span></div>
+      <div class="card-b">
+        <div class="field"><label>اسم المعلم</label><input type="text" id="thName" placeholder="أ. خالد العتيبي"></div>
+        <div class="pairline">
+          <div class="field" style="margin-bottom:0"><label>رقم الجوال</label><input type="tel" id="thPhone" placeholder="05xxxxxxxx"></div>
+          <button class="btn green" id="thAdd">إضافة</button>
+        </div>
+        <div class="row even" style="margin-top:10px">
+          <button class="btn" id="thImportX">استيراد إكسل</button>
+          <button class="btn" id="thImportT">استيراد ملف نصي</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="step g">≡</div><div><h2>قائمة المعلمين</h2><p>قائمة مستقلة عن الطلاب</p></div><span class="side" id="thCount"></span></div>
+      <div class="card-b">
+        <div id="teachersList"></div>
+        <div class="divider"></div>
+        <div class="row even">
+          <button class="btn sm" id="thExport">تصدير إكسل</button>
+          <button class="btn sm danger" id="thClear">حذف كل المعلمين</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== السجل ===== -->
+  <section class="page" id="page-log">
+    <div class="card">
+      <div class="card-h"><div class="step g">↻</div><div><h2>سجل التصاريح</h2><p>اضغط ↗ لإعادة فتح التصريح وإرساله</p></div><span class="side" id="lgCount"></span></div>
+      <div class="card-b">
+        <div id="logList"></div>
+        <div class="divider"></div>
+        <div class="row even">
+          <button class="btn sm" id="lgExport">تصدير إكسل</button>
+          <button class="btn sm danger" id="lgClear">حذف السجل</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== الإعدادات ===== -->
+  <section class="page" id="page-settings">
+    <div class="card">
+      <div class="card-h"><div class="step g">★</div><div><h2>بيانات المدرسة</h2><p>تظهر في ترويسة كل تصريح</p></div></div>
+      <div class="card-b">
+        <div class="field"><label>اسم المدرسة</label><input type="text" id="sSchool" placeholder="ثانوية الفاروق"></div>
+        <div class="grid2">
+          <div class="field"><label>اسم المعلم (المُصدِر)</label><input type="text" id="sTeacher"></div>
+          <div class="field"><label>اسم مدير المدرسة</label><input type="text" id="sPrincipal"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>الجهة التعليمية</label><input type="text" id="sAuthority" placeholder="إدارة تعليم الرياض"></div>
+          <div class="field"><label>مفتاح الدولة للواتساب</label><input type="text" id="sCC" placeholder="966"></div>
+        </div>
+        <button class="btn green block" id="saveSchool">حفظ البيانات</button>
+      </div>
+    </div>
+    <div class="card" id="installCard" style="display:none">
+      <div class="card-h"><div class="step g">⤒</div><div><h2>تثبيت التطبيق</h2><p>ليعمل كتطبيق مستقل على الشاشة الرئيسية وبدون إنترنت</p></div></div>
+      <div class="card-b">
+        <button class="btn green block" id="installBtn">تثبيت على الجهاز</button>
+        <p id="iosHint" style="display:none;margin:10px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.9">
+          على الآيفون والآيباد: افتح الصفحة في Safari ← زر المشاركة ← «إضافة إلى الشاشة الرئيسية».</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="step g">⤓</div><div><h2>النسخ الاحتياطي</h2><p>ملف واحد يحفظ كل شيء: الطلاب والمعلمين والسجل والإعدادات</p></div></div>
+      <div class="card-b">
+        <div class="row even"><button class="btn" id="expAll">تصدير نسخة</button><button class="btn" id="impAll">استيراد نسخة</button></div>
+        <div class="divider"></div>
+        <p style="margin:0;font-size:12px;font-weight:600;color:var(--ink-2)" id="dbInfo"></p>
+      </div>
+    </div>
+    <div class="card" style="border-color:#F0D3CE">
+      <div class="card-h" style="border-color:#F7E4E1"><div class="step" style="background:#FDF1EF;color:var(--red)">!</div>
+      <div><h2>حذف كل البيانات</h2><p>لا يمكن التراجع — صدّر نسخة احتياطية أولًا</p></div></div>
+      <div class="card-b"><button class="btn danger block" id="wipeAll">حذف كل البيانات في التطبيق</button></div>
+    </div>
+    <p style="text-align:center;font-size:11.5px;font-weight:600;color:var(--ink-2);margin:18px 0">تصريح دخول الصف · البيانات محفوظة في جهازك فقط</p>
+  </section>
+</main>
+
+<div class="sticky-bar" id="stickyBar">
+  <div class="sticky-in">
+    <span class="info" id="stickyInfo"></span>
+    <button class="btn green sm" id="stickyGo" style="padding:11px 18px">إصدار التصريح</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+<input type="file" id="filePicker" style="display:none">
+</body>
+</html>
