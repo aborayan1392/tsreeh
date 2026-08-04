@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.ClassPermit" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">@font/cairo_regular</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#08382F</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>
