@@ -1,0 +1,60 @@
+name: Build Native Kotlin APK
+
+on:
+  push:
+    branches: [ android-kotlin-native ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore full native project
+        run: |
+          cat .build/android-native.part* > /tmp/android-native.zip
+          rm -rf android-native
+          mkdir -p android-native
+          unzip -q /tmp/android-native.zip -d android-native
+
+      - name: Install embedded Cairo font
+        run: |
+          mkdir -p android-native/app/src/main/res/font
+          curl --globoff -L --fail --retry 3 -o /tmp/cairo.ttf 'https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf'
+          cp /tmp/cairo.ttf android-native/app/src/main/res/font/cairo_regular.ttf
+          cp /tmp/cairo.ttf android-native/app/src/main/res/font/cairo_semibold.ttf
+          cp /tmp/cairo.ttf android-native/app/src/main/res/font/cairo_bold.ttf
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build installable APK
+        working-directory: android-native
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p artifact
+          cp android-native/app/build/outputs/apk/debug/app-debug.apk artifact/ClassEntryPermit.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassEntryPermit-APK
+          path: artifact/ClassEntryPermit.apk
+          if-no-files-found: error
+          retention-days: 30
