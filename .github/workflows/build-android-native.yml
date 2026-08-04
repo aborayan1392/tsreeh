@@ -25,6 +25,16 @@ jobs:
           mkdir -p android-native
           unzip -q /tmp/android-native.zip -d android-native
 
+      - name: Apply verified Kotlin fixes
+        run: |
+          python3 - <<'PY'
+          path = 'android-native/app/src/main/java/com/aboryan/classpermit/ui/AppShell.kt'
+          text = open(path, encoding='utf-8').read()
+          text = text.replace('import androidx.compose.foundation.layout.weight\n', '')
+          text = text.replace('@Composable\n\n@Composable\nprivate fun StudentsScreen', '@Composable\nprivate fun StudentsScreen')
+          open(path, 'w', encoding='utf-8').write(text)
+          PY
+
       - name: Install embedded Cairo font
         run: |
           mkdir -p android-native/app/src/main/res/font
